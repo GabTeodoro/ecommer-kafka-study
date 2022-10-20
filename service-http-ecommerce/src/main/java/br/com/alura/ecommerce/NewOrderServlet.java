@@ -1,6 +1,5 @@
 package br.com.alura.ecommerce;
 
-import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -34,10 +33,16 @@ public class NewOrderServlet extends HttpServlet {
             var orderId = UUID.randomUUID().toString();
 
             var order = new Order(orderId, amount, email);
-            orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, order);
+            orderDispatcher.send("ECOMMERCE_NEW_ORDER",
+                    email,
+                    new CorrelationId(NewOrderServlet.class.getSimpleName()),
+                    order);
 
             var emailMessage = "Hi! We are processing your order!";
-            emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, emailMessage);
+            emailDispatcher.send("ECOMMERCE_SEND_EMAIL",
+                    email,
+                    new CorrelationId(NewOrderServlet.class.getSimpleName()),
+                    emailMessage);
 
             System.out.println("New order sent successfully :)");
 

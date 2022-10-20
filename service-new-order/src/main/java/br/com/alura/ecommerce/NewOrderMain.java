@@ -20,10 +20,16 @@ public class NewOrderMain {
                     var amount = new BigDecimal(Math.random() * 5000 + 1);
 
                     var order = new Order(orderId, amount, email);
-                    orderDispatcher.send("ECOMMERCE_NEW_ORDER", email, order);
+                    orderDispatcher.send("ECOMMERCE_NEW_ORDER",
+                            email,
+                            new CorrelationId(NewOrderMain.class.getSimpleName()),
+                            order);
 
                     var emailMessage = "Hi! We are processing your order!";
-                    emailDispatcher.send("ECOMMERCE_SEND_EMAIL", email, emailMessage);
+                    emailDispatcher.send("ECOMMERCE_SEND_EMAIL",
+                            email,
+                            new CorrelationId(NewOrderMain.class.getSimpleName()),
+                            emailMessage);
 
                 }
             }

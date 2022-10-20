@@ -9,10 +9,11 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import java.io.Closeable;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class KafkaDispatcher<T> implements Closeable {
 
-    private final KafkaProducer<String, T> producer;
+    private final KafkaProducer<String, Message<T>> producer;
 
     public KafkaDispatcher() {
         this.producer = new KafkaProducer(properties());
@@ -28,7 +29,19 @@ public class KafkaDispatcher<T> implements Closeable {
         return properties;
     }
 
-    public void send(String topic, String key, T value) throws ExecutionException, InterruptedException {
+    /*
+    O método (parse) pode ser assincrono, mas nem sempre
+    o método que envia as mensagens pro Kafka é também
+    Você pode escolher que ele seja async ou não
+    */
+    void send(String topic, String key, CorrelationId id, T payload) throws ExecutionException, InterruptedException {
+        var future = sendAsync(topic, key, id, payload);
+        future.get();
+
+    }
+
+    Future sendAsync(String topic, String key, CorrelationId id, T payload) {
+        var value = new Message(id, payload);
         // O record é o objeto que é enviado pelo Kafka
         var record = new ProducerRecord(topic, key, value);
 
@@ -40,7 +53,7 @@ public class KafkaDispatcher<T> implements Closeable {
             System.out.println("Success! " + data.topic() + ":::partition " + data.partition() + "/offset " + data.offset() +
                     "/timestamp " + data.timestamp());
         };
-        producer.send(record, callback).get();
+        return producer.send(record, callback);
     }
 
     @Override
